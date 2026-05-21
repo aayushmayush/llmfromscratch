@@ -29,7 +29,7 @@ llmfromscratch/
 ├── the-verdict.txt               # Training data — public domain short story
 ├── README.md
 ├── BOOK_SYNTHESIS.md             # Complete chapter-by-chapter synthesis
-├
+├── llm_book_full.txt             # Full text extraction from the book PDF
 │
 ├── ch02/                         # Chapter 2: Working with Text Data
 │   └── tokeniser_basics.ipynb    # Tokenization, vocabulary, BPE, data sampling
@@ -52,22 +52,26 @@ llmfromscratch/
 - `SimpleTokenizerV2` — handles unknown words with `<|unk|>`, text boundaries with `<|endoftext|>`
 - `tiktoken` BPE tokenizer integration — the real GPT-2 tokenizer (vocab size: 50,257)
 - `GPTDatasetV1` — PyTorch Dataset that creates input-target pairs via sliding window
+- `create_dataloader_v1` — configurable DataLoader with batch_size, max_length, stride
+- Token embedding layer (`nn.Embedding`) — converts token IDs → dense vectors (256-dim)
+- Absolute positional embeddings — added to token embeddings for position awareness
 
 **Key concepts:**
 - Why raw text must become numbers (neural networks do math, not language)
 - Byte Pair Encoding: breaks unknown words into subwords/bytes — no `<|unk|>` needed in production
 - Sliding window: inputs = `tokens[i : i+max_length]`, targets = `tokens[i+1 : i+1+max_length]`
 - Stride controls overlap between training chunks
+- Embeddings as a lookup table: each token ID retrieves a row from a trainable weight matrix
+- Positional embeddings: inject position information since self-attention is position-agnostic
 
 **Pipeline so far:**
 ```
-Raw text → Tokenizer → Token IDs → Data loader → Input-target batches
-                                                    ↓
-                                    (ready for embeddings — Sections 2.7-2.8 next)
+Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → Input tensors
+                                                                          ↓
+                                                          (ready for attention — Chapter 3 next)
 ```
 
 ### Coming next
-- **Chapter 2 (remaining)**: Token embeddings + positional embeddings
 - **Chapter 3**: Self-attention, causal attention, multi-head attention — four variants, from scratch
 - **Chapter 4**: Full GPT architecture — LayerNorm, GELU, FeedForward, TransformerBlocks, GPTModel
 - **Chapter 5**: Pretraining — loss functions, training loop, text generation, loading OpenAI weights
