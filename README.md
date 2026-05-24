@@ -34,7 +34,8 @@ llmfromscratch/
 ├── ch02/                         # Chapter 2: Working with Text Data
 │   └── tokeniser_basics.ipynb    # Tokenization, vocabulary, BPE, data sampling
 │
-├── ch03/                         # Chapter 3: Attention Mechanisms (next)
+├── ch03/                         # Chapter 3: Attention Mechanisms
+│   └── attention_basics.ipynb    # Simplified self-attention (no weights yet)
 ├── ch04/                         # Chapter 4: GPT Architecture
 ├── ch05/                         # Chapter 5: Pretraining
 ├── ch06/                         # Chapter 6: Classification Finetuning
@@ -71,8 +72,33 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
                                                           (ready for attention — Chapter 3 next)
 ```
 
+### Chapter 3: Attention Mechanisms 🚧
+
+**What's in `ch03/attention_basics.ipynb` (Sections 3.1–3.3):**
+- Self-attention mechanism without trainable weights — the conceptual foundation
+- Dot product as similarity measure between word embeddings
+- Softmax normalization: converting raw similarity scores → attention weights (sum to 1)
+- Context vector computation: weighted sum of all inputs, enriched by attention weights
+- Efficient matrix implementation: `inputs @ inputs.T` replaces nested for-loops
+- All context vectors computed simultaneously: `softmax(X @ Xᵀ) @ X`
+
+**Key concepts:**
+- Dot product measures vector alignment — higher score = more similar words
+- Attention weights are a probability distribution over the input sequence
+- Context vector = enriched embedding containing information from ALL words, not just one
+- Matrix multiplication makes attention O(n²) but vectorized and GPU-friendly
+
+**Pipeline update:**
+```
+Embeddings → Dot-product attention scores → Softmax → Attention weights → Context vectors
+                                                                               ↓
+                                                        (trainable Q/K/V weights next)
+```
+
+**Up next in Chapter 3:** Scaled dot-product attention with trainable weight matrices (Section 3.4)
+
 ### Coming next
-- **Chapter 3**: Self-attention, causal attention, multi-head attention — four variants, from scratch
+- **Chapter 3 (remaining)**: Scaled dot-product attention, causal attention, multi-head attention (Sections 3.4–3.6)
 - **Chapter 4**: Full GPT architecture — LayerNorm, GELU, FeedForward, TransformerBlocks, GPTModel
 - **Chapter 5**: Pretraining — loss functions, training loop, text generation, loading OpenAI weights
 - **Chapter 6**: Classification finetuning — spam detection
