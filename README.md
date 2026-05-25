@@ -95,7 +95,14 @@ Embeddings → Dot-product attention scores → Softmax → Attention weights �
                                                         (trainable Q/K/V weights next)
 ```
 
-**Up next in Chapter 3:** Scaled dot-product attention with trainable weight matrices (Section 3.4)
+**What's been added today (Section 3.4.1):**
+- Trainable weight matrices Wq, Wk, Wv (3×2) — initialize with `nn.Parameter`
+- Project inputs into query/key/value spaces: `Q = X @ Wq`, `K = X @ Wk`, `V = X @ Wv`
+- Compute attention scores from projected Q and K (not raw embeddings)
+- Scale scores by `√d_k` before softmax — prevents vanishing gradients
+- Compute context vector from projected values: `context = softmax(QKᵀ/√d_k) @ V`
+
+**Up next in Chapter 3:** Compact SelfAttention class (Section 3.4.2), then causal attention (3.5)
 
 ### Coming next
 - **Chapter 3 (remaining)**: Scaled dot-product attention, causal attention, multi-head attention (Sections 3.4–3.6)
