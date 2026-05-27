@@ -1,6 +1,6 @@
 # Chapter 3: Coding Attention Mechanisms
 
-> **Status:** In Progress | **Book sections:** 3.1–3.3 complete | **File:** `attention_basics.ipynb`
+> **Status:** In Progress | **Book sections:** 3.1–3.4 complete | **File:** `attention_basics.ipynb`
 
 ## What this chapter covers
 
@@ -18,9 +18,11 @@ Implementing the attention mechanism — the core innovation behind transformers
 
 ### 3.3 — Simple self-attention (no trainable weights) ✅
 
+### 3.4 — Self-attention with trainable weights ✅
+
 **4 attention variants in this chapter:**
 1. ✅ Simplified self-attention — dot products + softmax + weighted sum (Sections 3.3.1–3.3.2)
-2. ⬜ Scaled dot-product attention — with trainable Q/K/V weight matrices (Section 3.4)
+2. ✅ Scaled dot-product attention — with trainable Q/K/V weight matrices (Sections 3.4.1–3.4.2)
 3. ⬜ Causal (masked) attention — prevents looking at future tokens (Section 3.5)
 4. ⬜ Multi-head attention — parallel heads, efficient weight-split implementation (Section 3.6)
 
