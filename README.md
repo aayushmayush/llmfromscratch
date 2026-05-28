@@ -74,7 +74,7 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
 
 ### Chapter 3: Attention Mechanisms 🚧
 
-**What's in `ch03/attention_basics.ipynb` (Sections 3.1–3.4):**
+**What's in `ch03/attention_basics.ipynb` (Sections 3.1–3.5):**
 - Self-attention mechanism without trainable weights — the conceptual foundation
 - Dot product as similarity measure between word embeddings
 - Softmax normalization: converting raw similarity scores → attention weights (sum to 1)
@@ -85,6 +85,9 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
 - Scaled attention: dividing by `√d_k` before softmax to prevent vanishing gradients
 - `SelfAttention_v1` — compact class using `nn.Parameter` (manual weight init)
 - `SelfAttention_v2` — same class using `nn.Linear` (preferred: built-in init + bias control)
+- Causal attention mask — `torch.tril` creates lower-triangular mask to hide future tokens
+- Masked softmax — zeroed-out positions don't contribute after renormalization
+- Dropout — randomly drops attention weights during training to prevent overfitting
 
 **Key concepts:**
 - Dot product measures vector alignment — higher score = more similar words
@@ -93,12 +96,15 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
 - Matrix multiplication makes attention O(n²) but vectorized and GPU-friendly
 - Q/K/V projection: model learns different similarity measures for different purposes
 - `nn.Linear` vs `nn.Parameter`: Linear includes built-in weight initialization (Kaiming uniform)
+- Causal mask: prevents cheating — token i can only attend to tokens 0..i (not i+1..n)
+- Dropout: randomly zeroes attention weights during training → forces robust, redundant patterns
+- Dropout is training-only; nn.Module automatically disables it during inference
 
 **Pipeline update:**
 ```
-Embeddings → Q/K/V projection → Scaled dot-product scores → Softmax → Attention weights → Context vectors
-                                                                                        ↓
-                                                                (causal attention next — Section 3.5)
+Embeddings → Q/K/V projection → Scaled dot-product scores → Causal mask → Softmax → Dropout → Attn weights → Context vectors
+                                                                                                          ↓
+                                                                        (multi-head attention next — Section 3.6)
 ```
 
 ### Coming next

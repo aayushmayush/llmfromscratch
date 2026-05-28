@@ -1,6 +1,6 @@
 # Chapter 3: Coding Attention Mechanisms
 
-> **Status:** In Progress | **Book sections:** 3.1–3.4 complete | **File:** `attention_basics.ipynb`
+> **Status:** In Progress | **Book sections:** 3.1–3.5 complete | **File:** `attention_basics.ipynb`
 
 ## What this chapter covers
 
@@ -23,7 +23,7 @@ Implementing the attention mechanism — the core innovation behind transformers
 **4 attention variants in this chapter:**
 1. ✅ Simplified self-attention — dot products + softmax + weighted sum (Sections 3.3.1–3.3.2)
 2. ✅ Scaled dot-product attention — with trainable Q/K/V weight matrices (Sections 3.4.1–3.4.2)
-3. ⬜ Causal (masked) attention — prevents looking at future tokens (Section 3.5)
+3. ✅ Causal (masked) attention — prevents looking at future tokens, dropout for regularization (Section 3.5)
 4. ⬜ Multi-head attention — parallel heads, efficient weight-split implementation (Section 3.6)
 
 #### 3.3.1 — Single context vector (z²)
@@ -108,14 +108,44 @@ Attention weights:    [6, 6]    normalized scores (rows sum to 1)
 Context vectors:      [6, 3]    enriched embeddings (same shape as inputs)
 ```
 
-## Next: Section 3.4 — Self-attention with trainable weights
+### 3.5 — Causal (masked) attention ✅
+Prevents the model from looking at future tokens — essential for autoregressive text generation (predicting next word).
 
-Adding Q (query), K (key), V (value) weight matrices that the model learns. The formula becomes:
-
+**The mask:**
+```python
+context_length = attn_scores.shape[0]
+mask = torch.tril(torch.ones(context_length, context_length))
+# [[1, 0, 0, 0, 0, 0],   ← "Your" can only see itself
+#  [1, 1, 0, 0, 0, 0],   ← "journey" can see "Your" + itself
+#  [1, 1, 1, 0, 0, 0],   ← "starts" can see first 3
+#  [1, 1, 1, 1, 0, 0],   ...
+#  [1, 1, 1, 1, 1, 0],
+#  [1, 1, 1, 1, 1, 1]]   ← "step" can see all
 ```
-Context = softmax(Q @ Kᵀ / √d_k) @ V
 
-Where:  Q = X @ Wq,  K = X @ Wk,  V = X @ Wv
+**Applying the mask:**
+```python
+# Set future positions to -inf before softmax (so they become 0 after exp)
+attn_scores = attn_scores.masked_fill(mask == 0, float("-inf"))
+# Or: zero out after softmax + renormalize
+attn_weights = torch.softmax(attn_scores / d_k**0.5, dim=-1)
+masked = attn_weights * mask
+masked_norm = masked / masked.sum(dim=-1, keepdim=True)
 ```
 
-The `/√d_k` scaling prevents vanishing gradients in high dimensions (hence "scaled" dot-product attention).
+**Dropout — preventing overfitting:**
+```python
+self.dropout = nn.Dropout(p=0.5)           # in __init__
+attn_weights = self.dropout(attn_weights)  # in forward, after softmax
+```
+- Randomly zeroes attention weights during training → forces robust, redundant patterns
+- Each forward pass drops different neurons (like training multiple sub-networks)
+- Active only during `.train()`; automatically disabled during `.eval()` (inference)
+- Typical dropout rate: 0.5 for attention weights
+
+**Why causal matters:**
+Without the mask, when generating text, the model would peek at the answer. With the mask enforced, each token can only use previous context — exactly like real text generation where you don't know what word comes next.
+
+## Next: Section 3.6 — Multi-head attention
+
+Running multiple independent attention heads in parallel, each learning different relationships. The heads are concatenated and projected back to `d_in` dimensions.
