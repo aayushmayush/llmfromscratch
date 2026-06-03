@@ -1,6 +1,6 @@
 # Chapter 3: Coding Attention Mechanisms
 
-> **Status:** In Progress | **Book sections:** 3.1–3.5 complete | **File:** `attention_basics.ipynb`
+> **Status:** Complete | **Book sections:** 3.1–3.6 complete | **File:** `attention_basics.ipynb`
 
 ## What this chapter covers
 
@@ -24,7 +24,7 @@ Implementing the attention mechanism — the core innovation behind transformers
 1. ✅ Simplified self-attention — dot products + softmax + weighted sum (Sections 3.3.1–3.3.2)
 2. ✅ Scaled dot-product attention — with trainable Q/K/V weight matrices (Sections 3.4.1–3.4.2)
 3. ✅ Causal (masked) attention — prevents looking at future tokens, dropout for regularization (Section 3.5)
-4. ⬜ Multi-head attention — parallel heads, efficient weight-split implementation (Section 3.6)
+4. ✅ Multi-head attention — wrapper (concat) and efficient weight-split with out_proj (Section 3.6)
 
 #### 3.3.1 — Single context vector (z²)
 Using the sentence "Your journey starts with one step" with 3D embeddings:
@@ -146,6 +146,51 @@ attn_weights = self.dropout(attn_weights)  # in forward, after softmax
 **Why causal matters:**
 Without the mask, when generating text, the model would peek at the answer. With the mask enforced, each token can only use previous context — exactly like real text generation where you don't know what word comes next.
 
-## Next: Section 3.6 — Multi-head attention
+### 3.6 — Multi-head attention ✅
 
-Running multiple independent attention heads in parallel, each learning different relationships. The heads are concatenated and projected back to `d_in` dimensions.
+Two implementations showing the evolution:
+
+**MultiHeadAttentionWrapper (educational):**
+```python
+class MultiHeadAttentionWrapper(nn.Module):
+    def __init__(self, d_in, d_out, context_length, dropout, num_heads):
+        super().__init__()
+        self.heads = nn.ModuleList([
+            CausalAttention(d_in, d_out, context_length, dropout)
+            for _ in range(num_heads)
+        ])
+
+    def forward(self, x):
+        return torch.cat([head(x) for head in self.heads], dim=-1)
+```
+- Creates N independent `CausalAttention` instances
+- Each head has its own full Q/K/V weight matrices
+- Concatenates outputs: 2 heads × d_out=2 → output shape [B, T, 4]
+
+**MultiHeadAttention (efficient, production-ready):**
+- Single set of Q/K/V projections with full `d_out` dimension
+- Splits the output into `num_heads` chunks via `.view()` — each head operates on a smaller subspace (`head_dim = d_out // num_heads`)
+- Transposes to `[B, num_heads, T, head_dim]` for batched attention computation
+- Merges heads back via `.view(B, T, d_out)` after attention
+- Adds `out_proj` (Linear layer) to combine head outputs
+
+**Shape transformations (efficient version):**
+```
+Input:     [B, T, d_in]           e.g., [2, 6, 3]
+Q/K/V:     [B, T, d_out]          e.g., [2, 6, 4]   ← single projection
+Split:     [B, T, num_heads, hd]  e.g., [2, 6, 2, 2] ← d_out=4, 2 heads, head_dim=2
+Transpose: [B, num_heads, T, hd]  e.g., [2, 2, 6, 2]
+Attn:      [B, num_heads, T, hd]  e.g., [2, 2, 6, 2] ← same shape
+Merge:     [B, T, d_out]          e.g., [2, 6, 4]     ← .view() back
+out_proj:  [B, T, d_out]          e.g., [2, 6, 4]     ← final projection
+```
+
+**Why the efficient version matters:**
+- Wrapper creates N separate Linear layers → N× more parameters
+- Efficient version uses ONE set of projections split across heads → fewer params, faster
+- `out_proj` learns how to best combine the different head perspectives
+- This is the version used in GPT-2 and all production transformers
+
+## Next: Chapter 4 — Implementing a GPT model from scratch
+
+Building the full GPT architecture: LayerNorm, GELU activation, FeedForward networks, TransformerBlocks, and the complete GPTModel class that ties everything together.

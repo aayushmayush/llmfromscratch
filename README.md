@@ -72,9 +72,9 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
                                                           (ready for attention — Chapter 3 next)
 ```
 
-### Chapter 3: Attention Mechanisms 🚧
+### Chapter 3: Attention Mechanisms ✅
 
-**What's in `ch03/attention_basics.ipynb` (Sections 3.1–3.5):**
+**What's in `ch03/attention_basics.ipynb` (Sections 3.1–3.6):**
 - Self-attention mechanism without trainable weights — the conceptual foundation
 - Dot product as similarity measure between word embeddings
 - Softmax normalization: converting raw similarity scores → attention weights (sum to 1)
@@ -88,6 +88,8 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
 - Causal attention mask — `torch.tril` creates lower-triangular mask to hide future tokens
 - Masked softmax — zeroed-out positions don't contribute after renormalization
 - Dropout — randomly drops attention weights during training to prevent overfitting
+- `MultiHeadAttentionWrapper` — runs multiple CausalAttention heads, concatenates outputs
+- `MultiHeadAttention` — efficient weight-split implementation with `.view()`, `.transpose()`, and `out_proj`
 
 **Key concepts:**
 - Dot product measures vector alignment — higher score = more similar words
@@ -99,20 +101,20 @@ Raw text → Tokenizer → Token IDs → Embeddings + Positional Encoding → In
 - Causal mask: prevents cheating — token i can only attend to tokens 0..i (not i+1..n)
 - Dropout: randomly zeroes attention weights during training → forces robust, redundant patterns
 - Dropout is training-only; nn.Module automatically disables it during inference
+- Multi-head: each head learns different relationships (grammar, semantics, position)
+- Two multi-head approaches: wrapper (simple concat) vs weight-split (production, fewer params)
+- `out_proj` combines head outputs into a single context vector
 
 **Pipeline update:**
 ```
-Embeddings → Q/K/V projection → Scaled dot-product scores → Causal mask → Softmax → Dropout → Attn weights → Context vectors
-                                                                                                          ↓
-                                                                        (multi-head attention next — Section 3.6)
+Embeddings → Q/K/V projection → Scaled scores → Causal mask → Softmax → Dropout → Attn weights → Context vectors
+                                                                                                    ↓
+                                                                              Multiple heads in parallel (Section 3.6)
+                                                                                                    ↓
+                                                                          Full GPT architecture next — Chapter 4
 ```
 
-### Coming next
-- **Chapter 3 (remaining)**: Scaled dot-product attention, causal attention, multi-head attention (Sections 3.4–3.6)
-- **Chapter 4**: Full GPT architecture — LayerNorm, GELU, FeedForward, TransformerBlocks, GPTModel
-- **Chapter 5**: Pretraining — loss functions, training loop, text generation, loading OpenAI weights
-- **Chapter 6**: Classification finetuning — spam detection
-- **Chapter 7**: Instruction finetuning — making models follow instructions
+### Chapter 4: GPT Architecture — next
 
 ## References
 
