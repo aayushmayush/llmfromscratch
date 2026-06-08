@@ -35,8 +35,9 @@ llmfromscratch/
 │   └── tokeniser_basics.ipynb    # Tokenization, vocabulary, BPE, data sampling
 │
 ├── ch03/                         # Chapter 3: Attention Mechanisms
-│   └── attention_basics.ipynb    # Simplified self-attention (no weights yet)
+│   └── attention_basics.ipynb    # Self-attention → causal → multi-head
 ├── ch04/                         # Chapter 4: GPT Architecture
+│   └── transfer_block.ipynb      # GPT model skeleton, transformer blocks
 ├── ch05/                         # Chapter 5: Pretraining
 ├── ch06/                         # Chapter 6: Classification Finetuning
 └── ch07/                         # Chapter 7: Instruction Finetuning
@@ -114,7 +115,40 @@ Embeddings → Q/K/V projection → Scaled scores → Causal mask → Softmax �
                                                                           Full GPT architecture next — Chapter 4
 ```
 
-### Chapter 4: GPT Architecture — next
+### Chapter 4: GPT Architecture 🚧
+
+**What's in `ch04/transfer_block.ipynb` (Section 4.1):**
+- `GPT_CONFIG_124M` — the configuration dictionary for GPT-2 small (124M params)
+  - 50,257 vocab, 1024 context, 768 emb_dim, 12 heads, 12 layers
+- `DummyGPTModel` — complete GPT model skeleton with forward pass
+  - Token embedding → Positional embedding → Dropout → 12× Transformer Blocks → LayerNorm → Output projection
+- `DummyTransformerBlock` — placeholder (passes input through unchanged)
+- `DummyLayerNorm` — placeholder (passes input through unchanged)
+
+**Architecture layout:**
+```
+Token IDs [B, T]
+    ↓
+Token Embed + Position Embed   ← Chapter 2 components
+    ↓
+Dropout                        ← Chapter 3 component
+    ↓
+12× TransformerBlock           ← 12 stacked blocks (dummies for now)
+    ↓
+Final LayerNorm                ← stabilizes output
+    ↓
+Linear(768 → 50257)            ← projects to vocabulary
+    ↓
+Logits [B, T, 50257]           ← one score per vocab word per position
+```
+
+**Key concepts:**
+- The config (`cfg`) is a single source of truth — every component reads from it
+- `out_head` projects 768-dim → 50,257 scores (one per vocabulary word)
+- The skeleton is a LEGO frame — dummy blocks will be replaced with real attention + feedforward blocks
+- Shape invariance: every block outputs `[B, T, 768]` (same as input), so you can stack them
+
+**Up next:** LayerNorm implementation, then real TransformerBlock with attention + feedforward + residuals
 
 ## References
 
