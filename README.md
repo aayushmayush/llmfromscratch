@@ -117,13 +117,17 @@ Embeddings → Q/K/V projection → Scaled scores → Causal mask → Softmax �
 
 ### Chapter 4: GPT Architecture 🚧
 
-**What's in `ch04/transfer_block.ipynb` (Section 4.1):**
+**What's in `ch04/transfer_block.ipynb` (Sections 4.1–4.4):**
 - `GPT_CONFIG_124M` — the configuration dictionary for GPT-2 small (124M params)
   - 50,257 vocab, 1024 context, 768 emb_dim, 12 heads, 12 layers
 - `DummyGPTModel` — complete GPT model skeleton with forward pass
   - Token embedding → Positional embedding → Dropout → 12× Transformer Blocks → LayerNorm → Output projection
 - `DummyTransformerBlock` — placeholder (passes input through unchanged)
-- `DummyLayerNorm` — placeholder (passes input through unchanged)
+- ReLU activation — simple nonlinearity: `max(0, x)`, used as a baseline
+- LayerNorm — normalizes activations to mean=0, variance=1 with learnable scale & shift
+- GELU activation — smooth ReLU alternative: `x · Φ(x)`, standard for transformers
+- GELU vs ReLU plot — comparing the smooth curve (GELU) vs sharp cutoff (ReLU)
+- `FeedForward` — complete feedforward block: `Linear(768→3072) → GELU → Linear(3072→768)`
 
 **Architecture layout:**
 ```
@@ -133,9 +137,9 @@ Token Embed + Position Embed   ← Chapter 2 components
     ↓
 Dropout                        ← Chapter 3 component
     ↓
-12× TransformerBlock           ← 12 stacked blocks (dummies for now)
+12× TransformerBlock           ← each: Attention + FeedForward + residuals (dummies for now)
     ↓
-Final LayerNorm                ← stabilizes output
+Final LayerNorm                ← normalizes mean→0, variance→1
     ↓
 Linear(768 → 50257)            ← projects to vocabulary
     ↓
@@ -147,8 +151,11 @@ Logits [B, T, 50257]           ← one score per vocab word per position
 - `out_head` projects 768-dim → 50,257 scores (one per vocabulary word)
 - The skeleton is a LEGO frame — dummy blocks will be replaced with real attention + feedforward blocks
 - Shape invariance: every block outputs `[B, T, 768]` (same as input), so you can stack them
+- LayerNorm: normalizes per-token to mean=0, var=1, then applies learnable scale + shift
+- GELU smoothness gives cleaner gradients than ReLU in deep networks
+- FeedForward expands to 4× width (3072), applies GELU, contracts back to 768
 
-**Up next:** LayerNorm implementation, then real TransformerBlock with attention + feedforward + residuals
+**Up next:** Residual connections + real TransformerBlock with attention + feedforward
 
 ## References
 
